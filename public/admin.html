@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajolote Envíos · Empleados</title>
+<style>body{font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;background:#f6f1f3}
+form{background:#fff;padding:28px;border-radius:12px;box-shadow:0 4px 18px #0001;width:300px}
+input,button{display:block;width:100%;margin:8px 0;padding:10px;font:inherit;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
+button{background:#e86a92;color:#fff;border:0}</style></head>
+<body>
+<form id="l"><h2>Acceso empleados</h2>
+<input id="u" type="email" placeholder="correo@ajolote-envios.test" required>
+<input id="p" type="password" placeholder="Contraseña" required>
+<button>Entrar</button><p id="m" style="color:#b33"></p></form>
+<script>
+// Inicio de sesión contra Firebase Auth: los intentos (fuerza bruta, relleno de credenciales) quedan en los logs.
+const KEY = "AIzaSyD2XL-km5Jqa9zWNk5LXnoqaHCwkHQaAG0";
+document.getElementById("l").onsubmit = async e => {
+  e.preventDefault();
+  await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${KEY}`,
+    { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: u.value, password: p.value, returnSecureToken: true }) });
+  document.getElementById("m").textContent = "Credenciales inválidas.";
+};
+</script>
+</body></html>

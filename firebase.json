@@ -1,0 +1,7 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": ["**/.*"],
+    "rewrites": [{ "source": "/admin", "destination": "/admin.html" }]
+  }
+}

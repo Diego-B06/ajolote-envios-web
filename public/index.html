@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajolote Envíos · Rastrea tu paquete</title>
+<style>
+body{margin:0;font:16px/1.5 system-ui,sans-serif;background:#fff7f9;color:#2b1d22}
+header{background:#e86a92;color:#fff;padding:18px 24px;font-weight:700;font-size:20px}
+main{max-width:640px;margin:40px auto;padding:0 16px}
+input,button{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid #d9b8c3}
+button{background:#e86a92;color:#fff;border:0;cursor:pointer}
+#res{margin-top:18px;color:#6b4b55}
+footer{margin-top:60px;font-size:13px;color:#9b7d87;text-align:center}
+</style>
+</head>
+<body>
+<header>🦎 Ajolote Envíos</header>
+<main>
+  <h1>Rastrea tu paquete</h1>
+  <p>Escribe tu número de guía (empieza con AJ).</p>
+  <form id="f"><input id="g" placeholder="AJ0000000000" required> <button>Buscar</button></form>
+  <div id="res"></div>
+  <h2 style="margin-top:40px">¿Dudas?</h2>
+  <form id="c">
+    <p><input id="cn" placeholder="Nombre" required></p>
+    <p><input id="cc" type="email" placeholder="Correo" required></p>
+    <p><input id="cm" placeholder="Mensaje" required style="width:100%"></p>
+    <button>Enviar</button>
+  </form>
+</main>
+<footer>© 2026 Ajolote Envíos · <a href="/admin">Acceso empleados</a></footer>
+
+<script>
+// TODO(dev): mover estas llaves a variables de entorno antes de producción
+const firebaseConfig = {
+  apiKey: "AIzaSyD2XL-km5Jqa9zWNk5LXnoqaHCwkHQaAG0",
+  authDomain: "ajolote-envios-9841.firebaseapp.com",
+  projectId: "ajolote-envios-9841",
+  appId: "1:40510234653:web:e54fafcf89624b1ba8a6f4"
+};
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+// const SUPABASE_SERVICE_ROLE = "";  // la de servicio está en el .env del backend
+
+async function buscar(guia) {
+  if (!SUPABASE_URL) {  // backend viejo: Firestore directo
+    const r = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents:runQuery?key=${firebaseConfig.apiKey}`,
+      { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "pedidos" }],
+          where: { fieldFilter: { field: { fieldPath: "guia" }, op: "EQUAL", value: { stringValue: guia } } }, limit: 1 } }) });
+    const d = r.ok ? await r.json() : [];
+    return d.filter(x => x.document).map(x => ({ estado: x.document.fields.estado.stringValue, destino: x.document.fields.destino.stringValue }));
+  }
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/pedidos?guia=eq.${encodeURIComponent(guia)}&select=estado,destino`,
+    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+  return r.ok ? r.json() : [];
+}
+document.getElementById("f").onsubmit = async e => {
+  e.preventDefault();
+  const d = await buscar(document.getElementById("g").value.trim());
+  document.getElementById("res").textContent = d.length ? `Estado: ${d[0].estado} · destino ${d[0].destino}` : "No encontramos esa guía.";
+};
+document.getElementById("c").onsubmit = async e => {
+  e.preventDefault();
+  const body = { nombre: cn.value, correo: cc.value, mensaje: cm.value, ts: new Date().toISOString() };
+  await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/contacto?key=${firebaseConfig.apiKey}`,
+    { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, { stringValue: v }])) }) });
+  e.target.reset(); alert("¡Gracias! Te contactamos pronto.");
+};
+</script>
+</body>
+</html>
